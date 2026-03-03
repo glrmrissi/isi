@@ -19,11 +19,8 @@ pub enum Commands {
         hash_old: String,
         hash_new: String,
     },
-
-    // # For while this shit don't work!
-    // CatFile {
-    //     #[arg(short = 'p')]
-    //     pretty: bool,
-    //     hash: String,
-    // },
+    CatFile {
+        #[arg(short = 'p')]
+        hash: String,
+    },
 }

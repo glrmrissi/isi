@@ -12,12 +12,9 @@ cargo run -- add README.md
 ```
 
 ``` 
-cargo run -- cat-file -p [your-hash]
-```
+cargo run -- diff [old-hash] [new-hash]
+``` 
 
 ``` 
 cargo run -- cat-file -p [your-hash]
 ```
-``` 
-cargo run -- diff [old-hash] [new-hash]
-``` 
