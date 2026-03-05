@@ -1,4 +1,8 @@
 # isi
+<div align="center">
+  <img width="127" height="127" alt="Frame 11" src="https://github.com/user-attachments/assets/a4544da0-ec29-4bfb-ac92-26dd442e01c8" />
+</div>
+
 
 A minimalist recreation of Git's core mechanics, written in Rust. `isi` implements the fundamental building blocks of version control: content-addressable object storage, a staging index, and diff between stored objects.
 
