@@ -17,7 +17,7 @@ Since `isi` uses the same SHA-1 + zlib format as Git, objects stored by `isi` ca
 ## Installation
 
 ```bash
-git clone <repo>
+git clone https://github.com/glrmrissi/isi
 cd git-be-like
 cargo install --path .
 ```
