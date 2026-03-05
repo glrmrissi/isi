@@ -10,7 +10,7 @@ fn main() {
     let result = match cli.command {
         Commands::Init => isi::commands::init::execute(),
         Commands::Add { path } => isi::commands::add::execute(&path),
-        Commands::Diff { hash_old, hash_new } => isi::commands::diff::execute(&hash_old, &hash_new),
+        Commands::Diff { hash_old, hash_new } => isi::commands::diff::execute(hash_old.as_deref(), hash_new.as_deref()),
         Commands::CatFile { hash } => isi::commands::cat::execute(&hash)
     };
 

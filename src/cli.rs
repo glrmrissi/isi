@@ -16,11 +16,14 @@ pub enum Commands {
         path: String,
     },
     Diff {
-        hash_old: String,
-        hash_new: String,
+        #[arg(value_name = "OLD_HASH")]
+        hash_old: Option<String>,
+        #[arg(value_name = "NEW_HASH")]
+        hash_new: Option<String>,
     },
     CatFile {
         #[arg(short = 'p')]
         hash: String,
     },
 }
+

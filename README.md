@@ -83,6 +83,14 @@ Shows a line-level diff between two stored objects. Removed lines are red (`-`),
 isi diff ab92bf26 e3647404
 ```
 
+### `isi diff` No arguments
+
+Shows all the difference between the saved index and the index on the local disk
+
+```bash
+isi diff
+```
+
 ```
 --- Diff between ab92bf2 and e364740 ---
   fn main() {

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::objects::blob::hash_and_store_blob;
 use crate::store::ignore::IsiIgnore;
-use crate::store::index::add_to_index;
+use crate::store::index::{read_index, write_index, IndexEntry, add_to_index};
 use crate::store::repo::find_root;
 
 pub fn execute(path: &str) -> io::Result<()> {
@@ -13,7 +13,23 @@ pub fn execute(path: &str) -> io::Result<()> {
     let p = Path::new(path);
 
     if p.is_dir() {
-        add_dir(p, &repo_root, &ignore)
+        let abs_dir = fs::canonicalize(p)?;
+        let prefix = relative_to(&abs_dir, &repo_root).unwrap_or_default();
+
+        let mut new_entries: Vec<IndexEntry> = Vec::new();
+        collect_dir(&abs_dir, &repo_root, &ignore, &mut new_entries)?;
+
+        let existing = read_index()?;
+        let mut merged: Vec<IndexEntry> = existing
+            .into_iter()
+            .filter(|e| !entry_is_under(&e.path, &prefix))
+            .collect();
+
+        for e in &new_entries {
+            println!("{}  {}", e.hash, e.path);
+        }
+        merged.extend(new_entries);
+        write_index(&merged)?;
     } else {
         let abs = fs::canonicalize(p)?;
         let rel = relative_to(&abs, &repo_root)?;
@@ -21,25 +37,20 @@ pub fn execute(path: &str) -> io::Result<()> {
             println!("ignored: {rel}");
             return Ok(());
         }
-        add_file(&abs, &rel)
+        let hash = store_file(&abs)?;
+        add_to_index(&hash, &rel)?;
+        println!("{hash}  {rel}");
     }
+
+    Ok(())
 }
 
-fn add_file(fs_path: &Path, repo_path: &str) -> io::Result<()> {
-    match hash_and_store_blob(fs_path.to_str().unwrap()) {
-        Ok(hash) => {
-            add_to_index(&hash, repo_path)?;
-            println!("{hash}  {repo_path}");
-            Ok(())
-        }
-        Err(e) => {
-            eprintln!("Error adding file {}: {e}", fs_path.display());
-            Err(e)
-        }
-    }
-}
-
-fn add_dir(dir: &Path, repo_root: &PathBuf, ignore: &IsiIgnore) -> io::Result<()> {
+fn collect_dir(
+    dir: &Path,
+    repo_root: &PathBuf,
+    ignore: &IsiIgnore,
+    out: &mut Vec<IndexEntry>,
+) -> io::Result<()> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
@@ -59,12 +70,27 @@ fn add_dir(dir: &Path, repo_root: &PathBuf, ignore: &IsiIgnore) -> io::Result<()
         }
 
         if is_dir {
-            add_dir(&path, repo_root, ignore)?;
+            collect_dir(&abs, repo_root, ignore, out)?;
         } else {
-            add_file(&abs, &rel)?;
+            match store_file(&abs) {
+                Ok(hash) => out.push(IndexEntry { hash, path: rel }),
+                Err(e) => eprintln!("error adding {}: {e}", abs.display()),
+            }
         }
     }
     Ok(())
+}
+
+fn store_file(fs_path: &Path) -> io::Result<String> {
+    hash_and_store_blob(fs_path.to_str().unwrap())
+}
+
+fn entry_is_under(entry_path: &str, prefix: &str) -> bool {
+    if prefix.is_empty() {
+        return true;
+    }
+    entry_path == prefix
+        || entry_path.starts_with(&format!("{prefix}/"))
 }
 
 fn relative_to(abs: &Path, root: &PathBuf) -> io::Result<String> {
