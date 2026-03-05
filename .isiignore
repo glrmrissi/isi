@@ -1,0 +1,11 @@
+target/
+
+Cargo.lock
+
+*.tmp
+*.log
+.DS_Store
+
+.env
+*.key
+*.pem

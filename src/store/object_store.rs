@@ -4,11 +4,14 @@ use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
 
+use super::repo::find_root;
+
 pub fn save_to_objects(hash: &str, data: &[u8]) -> io::Result<()> {
+    let root = find_root()?;
     let (dir, file_name) = hash.split_at(2);
-    let path = format!(".isi/objects/{dir}");
+    let path = root.join(format!(".isi/objects/{dir}"));
     fs::create_dir_all(&path)?;
-    let full_path = format!("{path}/{file_name}");
+    let full_path = path.join(file_name);
 
     let file = File::create(full_path)?;
     let mut encoder = ZlibEncoder::new(file, Compression::default());
@@ -19,8 +22,9 @@ pub fn save_to_objects(hash: &str, data: &[u8]) -> io::Result<()> {
 }
 
 pub fn read_object(hash: &str) -> io::Result<Vec<u8>> {
+    let root = find_root()?;
     let (dir, file_name) = hash.split_at(2);
-    let path = format!(".isi/objects/{dir}/{file_name}");
+    let path = root.join(format!(".isi/objects/{dir}/{file_name}"));
     let file = File::open(path)?;
     
     let mut decoder = ZlibDecoder::new(file);
