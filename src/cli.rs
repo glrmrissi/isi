@@ -12,8 +12,8 @@ pub struct Cli {
 pub enum Commands {
     Init,
     Add {
-        #[arg(value_name = "FILE")]
-        path: String,
+        #[arg(value_name = "PATH", num_args = 1..)]
+        paths: Vec<String>,
     },
     Diff {
         #[arg(value_name = "OLD_HASH")]

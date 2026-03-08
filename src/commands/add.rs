@@ -7,17 +7,26 @@ use crate::store::ignore::IsiIgnore;
 use crate::store::index::{read_index, write_index, IndexEntry, add_to_index};
 use crate::store::repo::find_root;
 
-pub fn execute(path: &str) -> io::Result<()> {
+pub fn execute(paths: &[String]) -> io::Result<()> {
     let repo_root = find_root()?;
     let ignore = IsiIgnore::load();
+
+    for path in paths {
+        add_path(path, &repo_root, &ignore)?;
+    }
+
+    Ok(())
+}
+
+fn add_path(path: &str, repo_root: &PathBuf, ignore: &IsiIgnore) -> io::Result<()> {
     let p = Path::new(path);
 
     if p.is_dir() {
         let abs_dir = fs::canonicalize(p)?;
-        let prefix = relative_to(&abs_dir, &repo_root).unwrap_or_default();
+        let prefix = relative_to(&abs_dir, repo_root).unwrap_or_default();
 
         let mut new_entries: Vec<IndexEntry> = Vec::new();
-        collect_dir(&abs_dir, &repo_root, &ignore, &mut new_entries)?;
+        collect_dir(&abs_dir, repo_root, ignore, &mut new_entries)?;
 
         let existing = read_index()?;
         let mut merged: Vec<IndexEntry> = existing
@@ -32,7 +41,7 @@ pub fn execute(path: &str) -> io::Result<()> {
         write_index(&merged)?;
     } else {
         let abs = fs::canonicalize(p)?;
-        let rel = relative_to(&abs, &repo_root)?;
+        let rel = relative_to(&abs, repo_root)?;
         if ignore.should_ignore(&rel, false) {
             println!("ignored: {rel}");
             return Ok(());
