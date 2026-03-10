@@ -5,7 +5,7 @@ pub mod store;
 
 
 pub use cli::{Cli, Commands};
-pub use commands::{add, diff, init, cat};
+pub use commands::{add, commit, diff, init, cat};
 pub use objects::{blob, tree, types::TreeEntry};
 pub use store::{
     index::{add_to_index, read_index, write_index},

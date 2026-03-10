@@ -10,7 +10,7 @@ pub struct IsiIgnore {
 impl IsiIgnore {
     pub fn load() -> Self {
         let patterns = Self::read_patterns().unwrap_or_default();
-        IsiIgnore { patterns }
+        IsiIgnore { patterns } 
     }
 
     fn read_patterns() -> io::Result<Vec<String>> {
@@ -68,7 +68,6 @@ fn glob_inner(p: &[char], t: &[char]) -> bool {
     match (p.first(), t.first()) {
         (None, None) => true,
         (Some('*'), _) => {
-            // * não cruza /
             for i in 0..=t.len() {
                 if t[..i].contains(&'/') {
                     break;

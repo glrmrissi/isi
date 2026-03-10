@@ -25,5 +25,9 @@ pub enum Commands {
         #[arg(short = 'p')]
         hash: String,
     },
+    Commit {
+        #[arg(short = 'm', value_name = "MESSAGE")]
+        message: String,
+    },
 }
 

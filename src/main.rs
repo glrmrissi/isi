@@ -11,7 +11,8 @@ fn main() {
         Commands::Init => isi::commands::init::execute(),
         Commands::Add { paths } => isi::commands::add::execute(&paths),
         Commands::Diff { hash_old, hash_new } => isi::commands::diff::execute(hash_old.as_deref(), hash_new.as_deref()),
-        Commands::CatFile { hash } => isi::commands::cat::execute(&hash)
+        Commands::CatFile { hash } => isi::commands::cat::execute(&hash),
+        Commands::Commit { message } => isi::commands::commit::execute(&message)
     };
 
     if let Err(e) = result {
