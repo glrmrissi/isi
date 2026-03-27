@@ -29,5 +29,10 @@ pub enum Commands {
         #[arg(short = 'm', value_name = "MESSAGE")]
         message: String,
     },
+    Push {
+        /// Remote URL (overrides ISI_REMOTE env var, default: http://localhost:3000)
+        #[arg(value_name = "REMOTE")]
+        remote: Option<String>,
+    },
 }
 

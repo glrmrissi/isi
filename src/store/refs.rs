@@ -27,6 +27,35 @@ pub fn read_head_commit() -> io::Result<Option<String>> {
     }
 }
 
+pub fn read_head_ref() -> io::Result<(String, Option<String>)> {
+    let root = find_root()?;
+    let head_path = root.join(".isi/HEAD");
+
+    if !head_path.exists() {
+        return Ok(("main".to_string(), None));
+    }
+
+    let content = fs::read_to_string(&head_path)?;
+    let content = content.trim();
+
+    if let Some(ref_path) = content.strip_prefix("ref: ") {
+        // Extract branch name from e.g. "refs/heads/main"
+        let branch = ref_path
+            .strip_prefix("refs/heads/")
+            .unwrap_or(ref_path)
+            .to_string();
+        let ref_file = root.join(".isi").join(ref_path);
+        let hash = if ref_file.exists() {
+            Some(fs::read_to_string(&ref_file)?.trim().to_string())
+        } else {
+            None
+        };
+        Ok((branch, hash))
+    } else {
+        Ok(("HEAD".to_string(), Some(content.to_string())))
+    }
+}
+
 pub fn write_head_commit(hash: &str) -> io::Result<()> {
     let root = find_root()?;
     let head_path = root.join(".isi/HEAD");

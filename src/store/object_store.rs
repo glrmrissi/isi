@@ -44,3 +44,24 @@ pub fn read_object_with_type(hash: &str) -> io::Result<(String, Vec<u8>)> {
 
     Ok((kind, decoded[(pos + 1)..].to_vec()))
 }
+
+pub fn read_object_raw(hash: &str) -> io::Result<(String, Vec<u8>)> {
+    let root = find_root()?;
+    let (dir, file_name) = hash.split_at(2);
+    let path = root.join(format!(".isi/objects/{dir}/{file_name}"));
+
+    let raw = fs::read(&path)?;
+
+    // Decompress just to detect the kind from the header
+    let mut decoder = ZlibDecoder::new(raw.as_slice());
+    let mut decoded = Vec::new();
+    decoder.read_to_end(&mut decoded)?;
+
+    let pos = decoded.iter().position(|&b| b == 0)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Invalid Header!!"))?;
+
+    let header = String::from_utf8_lossy(&decoded[..pos]).to_string();
+    let kind = header.split_whitespace().next().unwrap_or("blob").to_string();
+
+    Ok((kind, raw))
+}

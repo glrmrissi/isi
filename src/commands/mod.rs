@@ -3,3 +3,4 @@ pub mod diff;
 pub mod add;
 pub mod cat;
 pub mod commit;
+pub mod push;

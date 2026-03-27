@@ -12,7 +12,8 @@ fn main() {
         Commands::Add { paths } => isi::commands::add::execute(&paths),
         Commands::Diff { hash_old, hash_new } => isi::commands::diff::execute(hash_old.as_deref(), hash_new.as_deref()),
         Commands::CatFile { hash } => isi::commands::cat::execute(&hash),
-        Commands::Commit { message } => isi::commands::commit::execute(&message)
+        Commands::Commit { message } => isi::commands::commit::execute(&message),
+        Commands::Push { remote } => isi::commands::push::execute(remote.as_deref()),
     };
 
     if let Err(e) = result {
