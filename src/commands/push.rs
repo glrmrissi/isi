@@ -12,22 +12,34 @@ pub fn execute(remote: Option<&str>) -> io::Result<()> {
         .unwrap_or_else(|| "http://localhost:3000".to_string());
     let base_url = base_url.trim_end_matches('/');
 
+    let root = find_root()?;
+
+    // Repo name = directory name, overridable via ISI_REPO
+    let repo_name = std::env::var("ISI_REPO").unwrap_or_else(|_| {
+        root.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("default")
+            .to_string()
+    });
+
     let client = reqwest::blocking::Client::new();
 
-    let root = find_root()?;
-    let objects_dir = root.join(".isi/objects");
+    // Ensure repo exists on server
+    let _ = client
+        .post(format!("{base_url}/repos"))
+        .header("content-type", "application/json")
+        .body(serde_json::json!({ "name": repo_name }).to_string())
+        .send()
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
     // Collect all objects
+    let objects_dir = root.join(".isi/objects");
     let mut hashes: Vec<String> = Vec::new();
     for prefix_entry in fs::read_dir(&objects_dir)? {
         let prefix_entry = prefix_entry?;
-        if !prefix_entry.file_type()?.is_dir() {
-            continue;
-        }
+        if !prefix_entry.file_type()?.is_dir() { continue; }
         let prefix = prefix_entry.file_name().into_string().unwrap_or_default();
-        if prefix.len() != 2 {
-            continue;
-        }
+        if prefix.len() != 2 { continue; }
         for obj_entry in fs::read_dir(prefix_entry.path())? {
             let obj_entry = obj_entry?;
             let rest = obj_entry.file_name().into_string().unwrap_or_default();
@@ -53,8 +65,7 @@ pub fn execute(remote: Option<&str>) -> io::Result<()> {
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
         match resp.status().as_u16() {
-            201 => pushed += 1,
-            200 => skipped += 1,
+            200 | 201 => pushed += 1,
             409 => skipped += 1,
             code => {
                 return Err(io::Error::new(
@@ -65,13 +76,13 @@ pub fn execute(remote: Option<&str>) -> io::Result<()> {
         }
     }
 
-    // Push the current branch ref
+    // Push ref
     let (branch, commit_hash) = read_head_ref()?;
 
     if let Some(hash) = commit_hash {
         let body = serde_json::json!({ "hash": hash });
         let resp = client
-            .put(format!("{base_url}/refs/{branch}"))
+            .put(format!("{base_url}/repos/{repo_name}/refs/{branch}"))
             .header("content-type", "application/json")
             .body(body.to_string())
             .send()
@@ -84,6 +95,7 @@ pub fn execute(remote: Option<&str>) -> io::Result<()> {
             ));
         }
 
+        println!("repo: {repo_name}");
         println!("pushed {pushed}/{total} objects ({skipped} already existed)");
         println!("{branch} -> {}", &hash[..7]);
     } else {
